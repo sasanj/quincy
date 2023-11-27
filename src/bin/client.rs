@@ -6,11 +6,11 @@ use quincy::utils::cli::Args;
 use quincy::utils::tracing::enable_tracing;
 use tracing::error;
 use tun::AsyncDevice;
-
+use tracing_log::LogTracer;
 #[tokio::main]
 async fn main() {
     let args: Args = Args::parse();
-
+    let _ = LogTracer::init();
     match run_client(args).await {
         Ok(_) => {}
         Err(e) => error!("A critical error occurred: {e}"),
