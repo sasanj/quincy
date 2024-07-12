@@ -26,6 +26,8 @@ use tracing::error;
 /// Quincy server configuration
 #[derive(Clone, Debug, PartialEq, Deserialize)]
 pub struct ServerConfig {
+    /// Interface name
+    pub interface_name: Option<String>,
     /// The name of the tunnel
     pub name: String,
     /// The certificate to use for the tunnel
@@ -72,6 +74,8 @@ pub struct ServerAuthenticationConfig {
 /// Quincy client configuration
 #[derive(Clone, Debug, PartialEq, Deserialize)]
 pub struct ClientConfig {
+    /// Interface name
+    pub interface_name: Option<String>,
     /// Connection string to be used to connect to a Quincy server
     pub connection_string: String,
     /// Authentication configuration

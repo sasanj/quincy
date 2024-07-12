@@ -48,12 +48,7 @@ impl QuincyClient {
         info!("Received server address: {server_address}");
 
         let mtu = self.config.connection.mtu;
-        let interface = I::create(client_address, mtu)?;
-
-        for route in &self.config.network.routes {
-            add_route(route, &server_address.addr())?
-        }
-
+        let interface = I::create(assigned_address, mtu, self.config.interface_name.clone())?;
         self.relay_packets(connection, interface, mtu as usize)
             .await
     }

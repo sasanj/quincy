@@ -37,7 +37,7 @@ pub trait InterfaceWrite: AsyncWriteExt + Sized + Unpin + Send + 'static {
 }
 
 pub trait Interface: InterfaceRead + InterfaceWrite {
-    fn create(interface_address: IpNet, mtu: u16) -> Result<Self>;
+    fn create(interface_address: IpNet, mtu: u16, interface_name: Option<String>) -> Result<Self>;
 
     fn split(self) -> (ReadHalf<Self>, WriteHalf<Self>) {
         tokio::io::split(self)
@@ -49,9 +49,15 @@ impl<I: Interface> InterfaceWrite for WriteHalf<I> {}
 impl InterfaceRead for AsyncDevice {}
 impl InterfaceWrite for AsyncDevice {}
 impl Interface for AsyncDevice {
-    fn create(interface_address: IpNet, mtu: u16) -> Result<AsyncDevice> {
+    fn create(
+        interface_address: IpNet,
+        mtu: u16,
+        interface_name: Option<String>,
+    ) -> Result<AsyncDevice> {
         let mut config = Configuration::default();
-
+        if let Some(tun_name) = interface_name {
+            config.tun_name(tun_name);
+        }
         config
             .address(interface_address.addr())
             .netmask(interface_address.netmask())
