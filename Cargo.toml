@@ -52,6 +52,7 @@ tokio = { version = "^1.25", features = [
     "sync",
     "io-util",
     "signal",
+    "process",
 ] }
 dashmap = "^6"
 futures = "^0.3.17"

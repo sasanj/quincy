@@ -76,6 +76,8 @@ pub struct ServerAuthenticationConfig {
 pub struct ClientConfig {
     /// Interface name
     pub interface_name: Option<String>,
+    /// Command to run after the tunnel is established
+    pub command: Option<String>,
     /// Connection string to be used to connect to a Quincy server
     pub connection_string: String,
     /// Authentication configuration

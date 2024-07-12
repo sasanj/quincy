@@ -16,8 +16,9 @@ use crate::network::route::add_route;
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
 use std::sync::Arc;
+use tokio::process::Command;
 use tokio::sync::mpsc::{channel, Receiver, Sender};
-use tracing::{debug, info};
+use tracing::{debug, error, info};
 
 /// Represents a Quincy client that connects to a server and relays packets between the server and a TUN interface.
 pub struct QuincyClient {
@@ -49,6 +50,34 @@ impl QuincyClient {
 
         let mtu = self.config.connection.mtu;
         let interface = I::create(assigned_address, mtu, self.config.interface_name.clone())?;
+        if let Some(command) = &self.config.command {
+            info!("Executing command '{command}'");
+            let mut cmd = Command::new(command);
+
+            cmd.args(&[
+                self.config.connection_string.to_owned(),
+                assigned_address.to_string(),
+                mtu.to_string(),
+            ]);
+            //TODO: Get the interface name from the actual interface.
+            if let Some(interface_name) = self.config.interface_name.as_ref() {
+                cmd.arg(interface_name);
+            }
+            let ret = cmd.status().await;
+            if let Err(e) = ret {
+                error!("Failed to execute command '{}': {}", command, e);
+                return Err(anyhow!("Failed to execute command '{}': {}", command, e));
+            } else if let Ok(rv) = ret {
+                if !rv.success() {
+                    error!("Command '{}' failed with exit code {}", command, rv);
+                    return Err(anyhow!(
+                        "Command '{}' failed with exit code {}",
+                        command,
+                        rv
+                    ));
+                }
+            }
+        }
         self.relay_packets(connection, interface, mtu as usize)
             .await
     }
