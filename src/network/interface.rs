@@ -5,7 +5,7 @@ use anyhow::Result;
 use bytes::BytesMut;
 use ipnet::IpNet;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, ReadHalf, WriteHalf};
-use tun2::{AsyncDevice, Configuration};
+use tun2::{AbstractDevice, AsyncDevice, Configuration};
 
 pub trait InterfaceRead: AsyncReadExt + Sized + Unpin + Send + 'static {
     #[inline]
@@ -37,6 +37,10 @@ pub trait InterfaceWrite: AsyncWriteExt + Sized + Unpin + Send + 'static {
 }
 
 pub trait Interface: InterfaceRead + InterfaceWrite {
+    fn as_abstract(&self) -> &dyn AbstractDevice;
+
+    fn tun_name(&self) -> Result<String>;
+
     fn create(interface_address: IpNet, mtu: u16, interface_name: Option<String>) -> Result<Self>;
 
     fn split(self) -> (ReadHalf<Self>, WriteHalf<Self>) {
@@ -49,6 +53,15 @@ impl<I: Interface> InterfaceWrite for WriteHalf<I> {}
 impl InterfaceRead for AsyncDevice {}
 impl InterfaceWrite for AsyncDevice {}
 impl Interface for AsyncDevice {
+    fn as_abstract(&self) -> &dyn AbstractDevice {
+        (self as &AsyncDevice).as_ref()
+    }
+
+    fn tun_name(&self) -> Result<String> {
+        let t: &dyn AbstractDevice = (self as &AsyncDevice).as_ref();
+        Ok(t.tun_name()?)
+    }
+
     fn create(
         interface_address: IpNet,
         mtu: u16,

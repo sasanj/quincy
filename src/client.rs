@@ -18,7 +18,7 @@ use futures::StreamExt;
 use std::sync::Arc;
 use tokio::process::Command;
 use tokio::sync::mpsc::{channel, Receiver, Sender};
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 /// Represents a Quincy client that connects to a server and relays packets between the server and a TUN interface.
 pub struct QuincyClient {
@@ -58,23 +58,18 @@ impl QuincyClient {
                 self.config.connection_string.to_owned(),
                 assigned_address.to_string(),
                 mtu.to_string(),
+                interface.tun_name()?,
             ]);
-            //TODO: Get the interface name from the actual interface.
-            if let Some(interface_name) = self.config.interface_name.as_ref() {
-                cmd.arg(interface_name);
-            }
-            let ret = cmd.status().await;
-            if let Err(e) = ret {
-                error!("Failed to execute command '{}': {}", command, e);
-                return Err(anyhow!("Failed to execute command '{}': {}", command, e));
-            } else if let Ok(rv) = ret {
-                if !rv.success() {
-                    error!("Command '{}' failed with exit code {}", command, rv);
-                    return Err(anyhow!(
-                        "Command '{}' failed with exit code {}",
-                        command,
-                        rv
-                    ));
+            match cmd.status().await {
+                Err(e) => return Err(anyhow!("Failed to execute command '{}': {}", command, e)),
+                Ok(rv) => {
+                    if !rv.success() {
+                        return Err(anyhow!(
+                            "Command '{}' failed with exit code {}",
+                            command,
+                            rv
+                        ));
+                    }
                 }
             }
         }

@@ -105,6 +105,9 @@ pub const fn make_queue_pair() -> Lazy<(TestSender, TestReceiver)> {
 macro_rules! interface_impl {
     ($name:ident, $test_queue_send:ident, $test_queue_recv:ident) => {
         impl Interface for $name {
+            fn tun_name(&self) -> Result<String> {
+                Ok("test".to_string())
+            }
             fn create(
                 _interface_address: IpNet,
                 _mtu: u16,
