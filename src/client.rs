@@ -49,16 +49,17 @@ impl QuincyClient {
         info!("Received server address: {server_address}");
 
         let mtu = self.config.connection.mtu;
-        let interface = I::create(assigned_address, mtu, self.config.interface_name.clone())?;
+        let interface = I::create(client_address, mtu, self.config.interface_name.clone())?;
         if let Some(command) = &self.config.command {
             info!("Executing command '{command}'");
             let mut cmd = Command::new(command);
 
             cmd.args(&[
                 self.config.connection_string.to_owned(),
-                assigned_address.to_string(),
+                client_address.to_string(),
                 mtu.to_string(),
                 interface.tun_name()?,
+                server_address.to_string(),
             ]);
             match cmd.status().await {
                 Err(e) => return Err(anyhow!("Failed to execute command '{}': {}", command, e)),
@@ -72,6 +73,10 @@ impl QuincyClient {
                     }
                 }
             }
+        }
+        
+        for route in &self.config.network.routes {
+            add_route(route, &server_address.addr())?
         }
         self.relay_packets(connection, interface, mtu as usize)
             .await

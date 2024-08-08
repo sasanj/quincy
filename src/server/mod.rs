@@ -50,11 +50,8 @@ impl QuincyServer {
 
     /// Starts the tasks for this instance of Quincy tunnel and listens for incoming connections.
     pub async fn run<I: Interface>(&self) -> Result<()> {
-        let interface_address =
-            Ipv4Net::with_netmask(self.config.address_tunnel, self.config.address_mask)?.into();
-
         let interface = I::create(
-            interface_address,
+            self.config.tunnel_network.into(),
             self.config.connection.mtu,
             self.config.interface_name.clone(),
         )?;
