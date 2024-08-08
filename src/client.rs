@@ -60,6 +60,7 @@ impl QuincyClient {
                 mtu.to_string(),
                 interface.tun_name()?,
                 server_address.to_string(),
+                format!("{}/{}",server_address.network(),server_address.prefix_len()),
             ]);
             match cmd.status().await {
                 Err(e) => return Err(anyhow!("Failed to execute command '{}': {}", command, e)),
